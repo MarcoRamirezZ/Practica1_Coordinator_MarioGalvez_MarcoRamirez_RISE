@@ -39,6 +39,8 @@
 
 /*Class work*/
 #include"MyNewTask.h"
+#include "stdlib.h"
+#include "stdint.h"
 
 /************************************************************************************
 *************************************************************************************
@@ -163,11 +165,11 @@ void main_task(uint32_t param)
         Phy_Init();
         RNG_Init(); /* RNG must be initialized after the PHY is Initialized */
         MAC_Init();
-        MyTask_Init(); /* INIT MY NEW TASK */
         
         /* Bind to MAC layer */
         macInstance = BindToMAC( (instanceId_t)0 );
         Mac_RegisterSapHandlers( MCPS_NWK_SapHandler, MLME_NWK_SapHandler, macInstance );
+        MyTask_Init();
 
         App_init();
     }
@@ -344,7 +346,7 @@ void AppThread(uint32_t argument)
                       
                       gState = stateListen;
                       OSA_EventSet(mAppEvent, gAppEvtDummyEvent_c);
-                      MyTaskTimer_Start(); /*Start LED flashing with your task*/
+                      //MyTaskTimer_Start(); /*Start LED flashing with your task*/
                   }
               }
           }
@@ -554,7 +556,7 @@ static void App_HandleScanEdConfirm(nwkMessage_t *pMsg)
       }      
 #else      
   /* Select default channel */
-  mLogicalChannel = 12;
+  mLogicalChannel = 12;////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   
   /* Search for the channel with least energy */
 //  for(idx=0, n=0; n<16; n++)
@@ -812,6 +814,7 @@ static uint8_t App_HandleMlmeInput(nwkMessage_t *pMsg, uint8_t appInstance)
 * messages from the MCPS, e.g. Data Confirm, and Data Indication.
 *
 ******************************************************************************/
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////TODO: aqui recibe el counter para cambiar LEDs
 static void App_HandleMcpsInput(mcpsToNwkMessage_t *pMsgIn, uint8_t appInstance)
 {
   switch(pMsgIn->msgType)
@@ -828,6 +831,27 @@ static void App_HandleMcpsInput(mcpsToNwkMessage_t *pMsgIn, uint8_t appInstance)
        or application layer when data has been received. We simply
        copy the received data to the UART. */
     Serial_SyncWrite( interfaceId,pMsgIn->msgData.dataInd.pMsdu, pMsgIn->msgData.dataInd.msduLength );
+    uint8_t *messageLED = (pMsgIn->msgData.dataInd.pMsdu)+10;
+    uint8_t messageLED_2 = atoi((char *)messageLED);
+
+    switch(messageLED_2)
+    {//to get the value of the counter sent by end device
+    case RED:
+    	updateLED( RED );
+	break;
+    case GREEN:
+    	updateLED( GREEN );
+    break;
+    case BLUE:
+    	updateLED( BLUE );
+    break;
+    case WHITE:
+    	updateLED( WHITE );
+    break;
+    default:
+    break;
+    };
+
     break;
     
   default:
@@ -957,29 +981,26 @@ static void App_TransmitUartData(void)
 * Interface assumptions: None
 * Return value: None
 *****************************************************************************/
-static void App_HandleKeys
-  (
-  uint8_t events  /*IN: Events from keyboard modul  */
-  )
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////TODO: aqui va lo de los botones
+static void App_HandleKeys( uint8_t events  /*IN: Events from keyboard module  */ )
 {
+
 #if gKBD_KeysCount_c > 0 
     switch ( events ) 
     { 
-    case gKBD_EventSW1_c:
-    case gKBD_EventSW2_c:
-    case gKBD_EventSW3_c:
-    case gKBD_EventSW4_c:
     case gKBD_EventLongSW1_c:
     case gKBD_EventLongSW2_c:
     case gKBD_EventLongSW3_c:
     case gKBD_EventLongSW4_c:
+    case gKBD_EventSW1_c:
+    case gKBD_EventSW2_c:
+    case gKBD_EventSW3_c:
+    case gKBD_EventSW4_c:
         if(gState == stateInit)
-          {
-          LED_StopFlashingAllLeds();
-
-          OSA_EventSet(mAppEvent, gAppEvtDummyEvent_c);
-          }
-    break;
+        {
+            LED_StopFlashingAllLeds();
+            OSA_EventSet(mAppEvent, gAppEvtDummyEvent_c);
+        }
     }
 #endif
 }

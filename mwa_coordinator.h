@@ -32,13 +32,13 @@
   #define mDefaultValueOfChannel_c (0x07FFF800)
 #endif
 
-#define mMacExtendedAddress_c    (0x1111111111111111)
+#define mMacExtendedAddress_c    (0x0000000000000001)//(0x1111111111111111)
 
 /* Set the Coordinator short address */ 
-#define mDefaultValueOfShortAddress_c     0xCAFE
+#define mDefaultValueOfShortAddress_c     0x0000 //request de la practica
 
 /* Set the Coordinator PanID */ 
-#define mDefaultValueOfPanId_c            0xBEEF
+#define mDefaultValueOfPanId_c            0x2222 //request de la practica
 
 /* Maximum number of outstanding packets */
 #define mDefaultValueOfMaxPendingDataPackets_c 2

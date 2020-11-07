@@ -19,14 +19,13 @@ tmrTimerID_t myTimerID = gTmrInvalidTimerID_c;
 osaTaskId_t gMyTaskHandlerID = 0;
 
 /*Local variable to store the current state of the LEDs*/
-//static uint8_t ledsState = 0;
+static ledStates_e ledsState = RED;
+
+/*Local variable to know if the device has been connected, if not, dont allow LED changes */
+uint8_t connection_flag = 0;
 
 /*OSA Task Definition*/
 OSA_TASK_DEFINE(My_Task, gMyTaskPriority_c, 1, gMyTaskStackSize_c, FALSE);
-
-uint8_t gSwitch3Pressed = 0;
-uint8_t gSwitch4Pressed = 0;
-
 
 /*Main custom Task*/
 void My_Task( osaTaskParam_t argument )
@@ -48,43 +47,21 @@ void My_Task( osaTaskParam_t argument )
 		{
 			case gMyNewTaskEvent1_c:  //Start timer to count 3 seconds and change the LEDs
 				TMR_StartIntervalTimer(myTimerID, /*myTimerID*/3000, /* Timer's Timeout */myTaskTimerCallback, /* pointer to myTaskTimerCallback function */NULL);
-				TurnOffLeds(); /* Ensure all LEDs are turned off */
+				ledsState = BLACK;
+				updateLED( ledsState );
+				connection_flag = 1;
 				break;
 
 			case gMyNewTaskEvent2_c: /* Event called from myTaskTimerCallback */
-				//Evento usado para la recepción del switch 2 y 3
-				if ( gSwitch3Pressed )
-				{
-					gSwitch3Pressed = 0; //reset to 0 to wait for next button press
-					//gCounter = 1;   //Cuando se presione SW3 ponemos el counter de colores en 1
-					//LED_Operate( void ); //Description: Basic LED operation: ON, OFF, TOGGLE. in LED.h
-
-				}
-				else if ( gSwitch4Pressed )
-				{
-					gSwitch4Pressed = 0; //reset to 0 to wait for next button press
-					//gCounter = 2;   //Cuando se presione SW4 ponemos el counter de colores en 2
-					//LED_Operate( void ); //Description: Basic LED operation: ON, OFF, TOGGLE. in LED.h
-				}
-				else
-				{
-					PRINTF("Switch indication not received, Try again.");
-				}
-				if(!ledsState)
-//				{
-//					TurnOnLeds();
-//					ledsState = 1;
-//				}
-//				else
-//				{
-//					TurnOffLeds();
-//					ledsState = 0;
-//				}
+				/* If counter reaches end of states, reset to RED, the first value and update LEDs */
+				ledsState++;
+				ledsState = ( ledsState >= BLACK ) ? RED : ledsState;
+				updateLED( ledsState );
 				break;
 
 			case gMyNewTaskEvent3_c: /* Event to stop the timer */
-				ledsState = 0;
-				TurnOffLeds();
+				ledsState = BLACK;
+				updateLED( ledsState );
 				TMR_StopTimer(myTimerID);
 				break;
 
@@ -119,8 +96,56 @@ void MyTaskTimer_Stop(void)
 	OSA_EventSet(mMyEvents, gMyNewTaskEvent3_c);
 }
 
+/* Update the LED colors on the board */
+void updateLED( ledStates_e state )
+{
+	switch(state)
+	{
+		case RED:
+			TurnOffLeds();
+			Led2On();/*Led1On(); */
+		break;
 
+		case GREEN:
+			TurnOffLeds();
+			Led3On();
+		break;
 
+		case BLUE:
+			TurnOffLeds();
+			Led4On();
+		break;
+
+		case WHITE://Turn on all LEDs
+			 Led2On();
+			 Led3On();
+			 Led4On();
+		break;
+
+		default://BLACK
+			TurnOffLeds();
+		break;
+
+	}
+}
+
+/* Send the counter to the mwa_end_device file */
+ledStates_e returnLEDCounter(void)
+{
+	return ledsState;
+}
+
+/* Update the counter, the LED color and reset the timer, this function is called anytime SW3 or SW4 is pressed*/
+void updateLEDCounter(ledStates_e counter)
+{
+	if(connection_flag)//only if the device is connected, allow it to change the colors
+	{
+		ledsState = counter;
+		updateLED( ledsState );
+		TMR_StartIntervalTimer(myTimerID, /*myTimerID*/1000, /* Timer's Timeout */myTaskTimerCallback, /* pointer to myTaskTimerCallback function */NULL);
+	}
+	return;
+}
 
 
 

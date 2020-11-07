@@ -26,10 +26,19 @@
 #define gMyTaskPriority_c 3
 #define gMyTaskStackSize_c 400
 
+typedef enum{
+	RED = 0,
+	GREEN = 1,
+	BLUE = 2,
+	WHITE = 3,
+	BLACK = 4
+}ledStates_e;
+
 void MyTaskTimer_Start(void);
 void MyTaskTimer_Stop(void);
 void MyTask_Init(void);
-
-
+void updateLED( ledStates_e state );
+ledStates_e returnLEDCounter(void);
+void updateLEDCounter(ledStates_e counter);
 
 #endif /* MYNEWTASK_H_ */
